@@ -25,12 +25,12 @@ require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 describe Ohai::System, "plugin chef" do
   before(:each) do
     @ohai = Ohai::System.new
-    @ohai.stub!(:require_plugin).and_return(true)
+    @plugin = Ohai::DSL::Plugin.new(@ohai, File.join(PLUGIN_PATH, "chef.rb"))
   end
   
   it "should set [:chef_packages][:chef][:version] to the current chef version" do
-    @ohai._require_plugin("chef")
-    @ohai[:chef_packages][:chef][:version].should == Chef::VERSION
+    @plugin.run
+    @plugin[:chef_packages][:chef][:version].should == Chef::VERSION
   end
 end
 rescue LoadError

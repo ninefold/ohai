@@ -23,21 +23,22 @@ require 'open-uri'
 describe Ohai::System, "plugin ec2" do
   before(:each) do
     @ohai = Ohai::System.new
-    @ohai.stub!(:require_plugin).and_return(true)
-    @ohai[:network] = {:interfaces => {:eth0 => {} } }
+    @plugin = Ohai::DSL::Plugin.new(@ohai, File.join(PLUGIN_PATH, "ec2.rb"))
+    @plugin.stub!(:require_plugin).and_return(true)
+    @plugin[:network] = {:interfaces => {:eth0 => {} } }
   end
 
   shared_examples_for "!ec2" do
     it "should NOT attempt to fetch the ec2 metadata" do
-      @ohai.should_not_receive(:http_client)
-      @ohai._require_plugin("ec2")
+      @plugin.should_not_receive(:http_client)
+      @plugin.run
     end
   end
 
   shared_examples_for "ec2" do
     before(:each) do
       @http_client = mock("Net::HTTP client")
-      @ohai.stub!(:http_client).and_return(@http_client)
+      @plugin.stub!(:http_client).and_return(@http_client)
 
       @http_client.should_receive(:get).
         with("/2008-02-01/meta-data/").
@@ -61,11 +62,11 @@ describe Ohai::System, "plugin ec2" do
       t = mock("connection")
       t.stub!(:connect_nonblock).and_raise(Errno::EINPROGRESS)
       Socket.stub!(:new).and_return(t)
-      @ohai._require_plugin("ec2")
-      @ohai[:ec2].should_not be_nil
-      @ohai[:ec2]['instance_type'].should == "c1.medium"
-      @ohai[:ec2]['ami_id'].should == "ami-5d2dc934"
-      @ohai[:ec2]['security_groups'].should eql ['group1', 'group2']
+      @plugin.run
+      @plugin[:ec2].should_not be_nil
+      @plugin[:ec2]['instance_type'].should == "c1.medium"
+      @plugin[:ec2]['ami_id'].should == "ami-5d2dc934"
+      @plugin[:ec2]['security_groups'].should eql ['group1', 'group2']
     end
   end
 
@@ -74,7 +75,7 @@ describe Ohai::System, "plugin ec2" do
 
     before(:each) do
       IO.stub!(:select).and_return([[],[1],[]])
-      @ohai[:network][:interfaces][:eth0][:arp] = {"169.254.1.0"=>"fe:ff:ff:ff:ff:ff"}
+      @plugin[:network][:interfaces][:eth0][:arp] = {"169.254.1.0"=>"fe:ff:ff:ff:ff:ff"}
     end
   end
 
@@ -82,7 +83,7 @@ describe Ohai::System, "plugin ec2" do
     it_should_behave_like "!ec2"
 
     before(:each) do
-      @ohai[:network][:interfaces][:eth0][:arp] = {"169.254.1.0"=>"00:50:56:c0:00:08"}
+      @plugin[:network][:interfaces][:eth0][:arp] = {"169.254.1.0"=>"00:50:56:c0:00:08"}
     end
   end
   
@@ -110,6 +111,9 @@ describe Ohai::System, "plugin ec2" do
     it_should_behave_like "!ec2"
   
     before(:each) do
+      File.stub!(:exist?).with('/etc/chef/ohai/hints/ec2.json').and_return(false)
+      File.stub!(:exist?).with('C:\chef\ohai\hints/ec2.json').and_return(false)
+
       File.stub!(:exist?).with('/etc/chef/ohai/hints/rackspace.json').and_return(true)
       File.stub!(:read).with('/etc/chef/ohai/hints/rackspace.json').and_return('')
       File.stub!(:exist?).with('C:\chef\ohai\hints/rackspace.json').and_return(true)

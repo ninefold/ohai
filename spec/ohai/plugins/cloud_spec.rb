@@ -22,91 +22,92 @@ require File.expand_path(File.dirname(__FILE__) + '/../../spec_helper.rb')
 describe Ohai::System, "plugin cloud" do
   before(:each) do
     @ohai = Ohai::System.new
-    @ohai.stub!(:require_plugin).and_return(true)
+    @plugin = Ohai::DSL::Plugin.new(@ohai, File.join(PLUGIN_PATH, "cloud.rb"))
+    @plugin.stub!(:require_plugin).and_return(true)
   end
 
   describe "no cloud" do
     it "should NOT populate the cloud data" do
-      @ohai[:ec2] = nil
-      @ohai[:rackspace] = nil
-      @ohai[:eucalyptus] = nil
-      @ohai._require_plugin("cloud")
-      @ohai[:cloud].should be_nil
+      @plugin[:ec2] = nil
+      @plugin[:rackspace] = nil
+      @plugin[:eucalyptus] = nil
+      @plugin.run
+      @plugin[:cloud].should be_nil
     end
   end
   
   describe "with EC2" do
     before(:each) do
-      @ohai[:ec2] = Mash.new()
+      @plugin[:ec2] = Mash.new()
     end  
     
     it "should populate cloud public ip" do
-      @ohai[:ec2]['public_ipv4'] = "174.129.150.8"
-      @ohai._require_plugin("cloud")
-      @ohai[:cloud][:public_ips][0].should == @ohai[:ec2]['public_ipv4']
+      @plugin[:ec2]['public_ipv4'] = "174.129.150.8"
+      @plugin.run
+      @plugin[:cloud][:public_ips][0].should == @plugin[:ec2]['public_ipv4']
     end
 
     it "should populate cloud private ip" do
-      @ohai[:ec2]['local_ipv4'] = "10.252.42.149"
-      @ohai._require_plugin("cloud")
-      @ohai[:cloud][:private_ips][0].should == @ohai[:ec2]['local_ipv4']
+      @plugin[:ec2]['local_ipv4'] = "10.252.42.149"
+      @plugin.run
+      @plugin[:cloud][:private_ips][0].should == @plugin[:ec2]['local_ipv4']
     end
     
     it "should populate cloud provider" do
-      @ohai._require_plugin("cloud")
-      @ohai[:cloud][:provider].should == "ec2"
+      @plugin.run
+      @plugin[:cloud][:provider].should == "ec2"
     end
   end
   
   describe "with rackspace" do
     before(:each) do
-      @ohai[:rackspace] = Mash.new()
+      @plugin[:rackspace] = Mash.new()
     end  
     
     it "should populate cloud public ip" do
-      @ohai[:rackspace]['public_ip'] = "174.129.150.8"
-      @ohai._require_plugin("cloud")
-      @ohai[:cloud][:public_ips][0].should == @ohai[:rackspace][:public_ip]
+      @plugin[:rackspace]['public_ip'] = "174.129.150.8"
+      @plugin.run
+      @plugin[:cloud][:public_ips][0].should == @plugin[:rackspace][:public_ip]
     end
         
     it "should populate cloud private ip" do
-      @ohai[:rackspace]['private_ip'] = "10.252.42.149"
-      @ohai._require_plugin("cloud")
-      @ohai[:cloud][:private_ips][0].should == @ohai[:rackspace][:private_ip]
+      @plugin[:rackspace]['private_ip'] = "10.252.42.149"
+      @plugin.run
+      @plugin[:cloud][:private_ips][0].should == @plugin[:rackspace][:private_ip]
     end
     
      it "should populate first cloud public ip" do
-      @ohai[:rackspace]['public_ip'] = "174.129.150.8"
-      @ohai._require_plugin("cloud")
-      @ohai[:cloud][:public_ips].first.should == @ohai[:rackspace][:public_ip]
+      @plugin[:rackspace]['public_ip'] = "174.129.150.8"
+      @plugin.run
+      @plugin[:cloud][:public_ips].first.should == @plugin[:rackspace][:public_ip]
     end
         
     it "should populate cloud provider" do
-      @ohai._require_plugin("cloud")
-      @ohai[:cloud][:provider].should == "rackspace"
+      @plugin.run
+      @plugin[:cloud][:provider].should == "rackspace"
     end
   end
   
   describe "with eucalyptus" do
     before(:each) do
-      @ohai[:eucalyptus] = Mash.new()
+      @plugin[:eucalyptus] = Mash.new()
     end  
     
     it "should populate cloud public ip" do
-      @ohai[:eucalyptus]['public_ipv4'] = "174.129.150.8"
-      @ohai._require_plugin("cloud")
-      @ohai[:cloud][:public_ips][0].should == @ohai[:eucalyptus]['public_ipv4']
+      @plugin[:eucalyptus]['public_ipv4'] = "174.129.150.8"
+      @plugin.run
+      @plugin[:cloud][:public_ips][0].should == @plugin[:eucalyptus]['public_ipv4']
     end
 
     it "should populate cloud private ip" do
-      @ohai[:eucalyptus]['local_ipv4'] = "10.252.42.149"
-      @ohai._require_plugin("cloud")
-      @ohai[:cloud][:private_ips][0].should == @ohai[:eucalyptus]['local_ipv4']
+      @plugin[:eucalyptus]['local_ipv4'] = "10.252.42.149"
+      @plugin.run
+      @plugin[:cloud][:private_ips][0].should == @plugin[:eucalyptus]['local_ipv4']
     end
         
     it "should populate cloud provider" do
-      @ohai._require_plugin("cloud")
-      @ohai[:cloud][:provider].should == "eucalyptus"
+      @plugin.run
+      @plugin[:cloud][:provider].should == "eucalyptus"
     end
   end
   
